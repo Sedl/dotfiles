@@ -6,3 +6,50 @@ alias pssh="pssh -x '-o \"StrictHostKeyChecking no\"'"
 alias burn="wodim -v -eject"
 
 export PATH="$PATH:/sbin:/usr/sbin"
+
+function .finddeadlinks () {
+    find $1 -type l ! -exec test -r {} \; -print
+}
+
+function .reinject () {
+    python -c "
+import os
+import sys
+import subprocess
+
+# missing =  [fname for f in ([os.readlink(fname) for fname in os.listdir('.') if os.path.islink(fname)]) if not os.path.exists(f)]
+def getmissing(dir_):
+    for fname in os.listdir(dir_):
+        path = os.path.join(dir_, fname)
+        if not os.path.islink(path):
+            continue
+        if not os.path.exists(os.readlink(path)):
+                yield fname
+
+missing = list(getmissing('.'))
+
+SRCDIR = sys.argv[1]
+for fname in os.listdir(SRCDIR):
+    path = os.path.join(SRCDIR, fname)
+    if os.path.exists(path) and fname in missing:
+        subprocess.call(('git', 'annex', 'reinject', path, fname))
+" $1
+
+}
+
+unsetopt correct
+
+unsetopt share_history
+zstyle ':completion:*' hosts off
+
+export PATH="$PATH:/usr/local/go/bin"
+
+function flacsplit () {
+    cuebreakpoints "${1}"|shnsplit -o flac "${2}"
+    cuetag "${1}" split-track*.flac
+}
+
+function convert_mp3 () {
+    shift
+    parallel -j 3 'a={}; avconv -i "$a" -qscale:a 4 "${a[@]/%flac/mp3}"' ::: $@
+}

@@ -242,7 +242,7 @@ function zrcautoload() {
     local -i ffound
 
     ffile=$1
-    (( found = 0 ))
+    (( ffound = 0 ))
     for fdir in ${fpath} ; do
         [[ -e ${fdir}/${ffile} ]] && (( ffound = 1 ))
     done
@@ -584,6 +584,22 @@ watch=(notme root)
 
 # automatically remove duplicates from these arrays
 typeset -U path cdpath fpath manpath
+
+# Remove zle-line-{init,finish} if it looks like it turns smkx. This would be
+# better fixed by working with those modes too, but we use way too many
+# hardcoded bindings for now.
+function remove_widget () {
+    local name=$1
+    local cap=$2
+    if (( ${+functions[$name]} )) && [[ ${functions[$name]} == *${cap}* ]]; then
+        local w=${widgets[$name]}
+        zle -D $name
+        [[ $w == user:* ]] && unfunction ${w#*:}
+    fi
+}
+remove_widget zle-line-init smkx
+remove_widget zle-line-finish rmkx
+unfunction remove_widget
 
 # keybindings
 if [[ "$TERM" != emacs ]] ; then
@@ -1125,7 +1141,7 @@ DIRSTACKFILE=${DIRSTACKFILE:-${HOME}/.zdirs}
 if [[ -f ${DIRSTACKFILE} ]] && [[ ${#dirstack[*]} -eq 0 ]] ; then
     dirstack=( ${(f)"$(< $DIRSTACKFILE)"} )
     # "cd -" won't work after login by just setting $OLDPWD, so
-    [[ -d $dirstack[1] ]] && cd $dirstack[1] && cd $OLDPWD
+##    [[ -d $dirstack[1] ]] && cd $dirstack[1] && cd $OLDPWD
 fi
 
 chpwd() {
@@ -1209,7 +1225,7 @@ if zrcautoload colors && colors 2>/dev/null ; then
     MAGENTA="%{${fg[magenta]}%}"
     YELLOW="%{${fg[yellow]}%}"
     WHITE="%{${fg[white]}%}"
-    NO_COLOUR="%{${reset_color}%}"
+    NO_COLOR="%{${reset_color}%}"
 else
     BLUE=$'%{\e[1;34m%}'
     RED=$'%{\e[1;31m%}'
@@ -1218,7 +1234,7 @@ else
     WHITE=$'%{\e[1;37m%}'
     MAGENTA=$'%{\e[1;35m%}'
     YELLOW=$'%{\e[1;33m%}'
-    NO_COLOUR=$'%{\e[0m%}'
+    NO_COLOR=$'%{\e[0m%}'
 fi
 
 # gather version control information for inclusion in a prompt
@@ -1250,10 +1266,10 @@ if [[ "$TERM" == dumb ]] ; then
     zstyle ':vcs_info:*' actionformats "(%s%)-[%b|%a] " "zsh: %r"
     zstyle ':vcs_info:*' formats       "(%s%)-[%b] "    "zsh: %r"
 else
-    # these are the same, just with a lot of colours:
-    zstyle ':vcs_info:*' actionformats "${MAGENTA}(${NO_COLOUR}%s${MAGENTA})${YELLOW}-${MAGENTA}[${GREEN}%b${YELLOW}|${RED}%a${MAGENTA}]${NO_COLOUR} " \
+    # these are the same, just with a lot of colors:
+    zstyle ':vcs_info:*' actionformats "${MAGENTA}(${NO_COLOR}%s${MAGENTA})${YELLOW}-${MAGENTA}[${GREEN}%b${YELLOW}|${RED}%a${MAGENTA}]${NO_COLOR} " \
                                        "zsh: %r"
-    zstyle ':vcs_info:*' formats       "${MAGENTA}(${NO_COLOUR}%s${MAGENTA})${YELLOW}-${MAGENTA}[${GREEN}%b${MAGENTA}]${NO_COLOUR}%} " \
+    zstyle ':vcs_info:*' formats       "${MAGENTA}(${NO_COLOR}%s${MAGENTA})${YELLOW}-${MAGENTA}[${GREEN}%b${MAGENTA}]${NO_COLOR}%} " \
                                        "zsh: %r"
     zstyle ':vcs_info:(sv[nk]|bzr):*' branchformat "%b${RED}:${YELLOW}%r"
 fi
@@ -1380,13 +1396,13 @@ else
     # prompt below)
     if [[ $GRMLPROMPT -gt 0 ]] ; then
         PROMPT="${RED}${EXITCODE}${CYAN}[%j running job(s)] ${GREEN}{history#%!} ${RED}%(3L.+.) ${BLUE}%* %D
-${BLUE}%n${NO_COLOUR}@%m %40<...<%B%~%b%<< "
+${BLUE}%n${NO_COLOR}@%m %40<...<%B%~%b%<< "
     else
         # This assembles the primary prompt string
         if (( EUID != 0 )); then
-            PROMPT="${RED}${EXITCODE}${WHITE}${debian_chroot:+($debian_chroot)}${BLUE}%n${NO_COLOUR}@%m %40<...<%B%~%b%<< "
+            PROMPT="${RED}${EXITCODE}${WHITE}${debian_chroot:+($debian_chroot)}${BLUE}%n${NO_COLOR}@%m %40<...<%B%~%b%<< "
         else
-            PROMPT="${BLUE}${EXITCODE}${WHITE}${debian_chroot:+($debian_chroot)}${RED}%n${NO_COLOUR}@%m %40<...<%B%~%b%<< "
+            PROMPT="${BLUE}${EXITCODE}${WHITE}${debian_chroot:+($debian_chroot)}${RED}%n${NO_COLOR}@%m %40<...<%B%~%b%<< "
         fi
     fi
 fi
@@ -2616,12 +2632,15 @@ xtrename() {
 # API reference: https://code.google.com/apis/urlshortener/
 function zurl() {
     emulate -L zsh
+    setopt extended_glob
+
     if [[ -z $1 ]]; then
         print "USAGE: zurl <URL>"
         return 1
     fi
 
-    local PN url prog api json data
+    local PN url prog api json contenttype item
+    local -a data
     PN=$0
     url=$1
 
@@ -2639,11 +2658,19 @@ function zurl() {
     api='https://www.googleapis.com/urlshortener/v1/url'
     contenttype="Content-Type: application/json"
     json="{\"longUrl\": \"${url}\"}"
-    data=$($prog --silent -H ${contenttype} -d ${json} $api)
-    # Match against a regex and print it
-    if [[ $data =~ '"id": "(http://goo.gl/[[:alnum:]]+)"' ]]; then
-        print $match;
-    fi
+    data=(${(f)"$($prog --silent -H ${contenttype} -d ${json} $api)"})
+    # Parse the response
+    for item in "${data[@]}"; do
+        case "$item" in
+            ' '#'"id":'*)
+                item=${item#*: \"}
+                item=${item%\",*}
+                printf '%s\n' "$item"
+                return 0
+                ;;
+        esac
+    done
+    return 1
 }
 
 #f2# Find history events by search pattern and list them by date.
