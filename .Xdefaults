@@ -1,0 +1,59 @@
+
+urxvt*depth: 32
+urxvt*background: rgba:0000/0000/0200/c800
+
+urxvt*foreground: #ffffff
+#urxvt*background: #101010
+#urxvt*background: #000000
+! black
+urxvt*color0: #000000
+urxvt*color8: #555753
+
+! red
+urxvt*color1: #CC0000
+urxvt*color9: #EF2929
+
+!green
+urxvt*color2: #4E9A06
+urxvt*color10: #8AE234
+
+! yellow
+urxvt*color3: #C4A000
+urxvt*color11: #FCE94F
+
+! blue
+urxvt*color4: #3465A4
+urxvt*color12: #729FCF
+
+! purple
+urxvt*color5: #75507B
+urxvt*color13: #AD7FA8
+
+! light blue
+urxvt*color6: #06989A
+urxvt*color14: #34E2E2
+
+! white
+urxvt*color7: #D3D7CF
+urxvt*color15: #EEEEEC
+
+
+! other settings
+#urxvt*transparent: true
+urxvt*shading: 40
+#urxvt*font: xft:Bitstream\ Vera\ Sans\ Mono:style=roman:pixelsize=13
+urxvt*font: xft:Terminus:style=Regular:pixelsize=16:anitalias=true
+#urxvt.font: x:-misc-fixed-medium-r-*-*-13-*-75-75-c-60-iso10646-1
+#urxvt*font: xft:Ubuntu\ Mono:style=Regular:pixelsize=15:anitalias=true
+#urxvt*font: xft:Monospace:style=Regular:pixelsize=13:anitalias=true
+urxvt*scrollBar: false
+
+urxvt*cursorBlink: true
+#urxvt*buffered: false
+
+# make notifications work
+URxvt.urgentOnBell:  true
+
+URxvt*scrollTtyOutput:      false
+URxvt*scrollWithBuffer:     true
+URxvt*scrollTtyKeypress:    true
