@@ -1,11 +1,20 @@
 
-execute pathogen#infect()
+" remap mapleader to ,
+let mapleader = ","
+vnoremap <Leader>s :sort<CR>
+" use ,, to clear search highlight
+noremap <Leader>, :nohlsearch<CR>
+
+set showcmd
+
+filetype plugin indent on
+syntax on
+
 
 set tabstop=4
 set shiftwidth=4
 set shiftround
 set expandtab
-syntax on
 
 autocmd BufRead *.py set ts=4 sw=4 sta et sts=4 ai
 autocmd BufRead *.php set ts=4 sw=4 sta et sts=4 ai syntax=php.doxygen
@@ -32,8 +41,6 @@ set dir=~/.vimbackup
 vnoremap < <gv
 vnoremap > >gv
 
-let mapleader = ","
-vnoremap <Leader>s :sort<CR>
 
 set number
 set tw=79
@@ -47,6 +54,4 @@ set incsearch
 set ignorecase
 set smartcase
 
-let g:solarized_termcolors=256
-colorscheme solarized
 set background=dark
