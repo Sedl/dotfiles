@@ -53,3 +53,8 @@ function convert_mp3 () {
     shift
     parallel -j 3 'a={}; avconv -i "$a" -qscale:a 4 "${a[@]/%flac/mp3}"' ::: $@
 }
+
+# Python virtuelenv fix for tmux
+if [ -n "$VIRTUAL_ENV" ]; then
+    source "$VIRTUAL_ENV/bin/activate"
+fi
