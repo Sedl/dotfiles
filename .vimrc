@@ -5,6 +5,9 @@ vnoremap <Leader>s :sort<CR>
 " use ,, to clear search highlight
 noremap <Leader>, :nohlsearch<CR>
 
+" toggle paste mode
+noremap <Leader>p :set paste!<CR>
+
 set showcmd
 
 filetype plugin indent on
@@ -55,3 +58,5 @@ set ignorecase
 set smartcase
 
 set background=dark
+
+set viminfo=%,<100,'100,/50,:100,h,f0
