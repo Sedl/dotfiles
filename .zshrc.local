@@ -37,12 +37,13 @@ for fname in os.listdir(SRCDIR):
 
 }
 
-unsetopt correct
-
-unsetopt share_history
-zstyle ':completion:*' hosts off
-
-export PATH="$PATH:/usr/local/go/bin"
+function macinfo () {
+    python3 -c "
+    from netaddr import EUI
+    from sys import argv
+    print (EUI(argv[1]).info)
+    " $1
+}
 
 function flacsplit () {
     cuebreakpoints "${1}"|shnsplit -o flac "${2}"
@@ -53,6 +54,13 @@ function convert_mp3 () {
     shift
     parallel -j 3 'a={}; avconv -i "$a" -qscale:a 4 "${a[@]/%flac/mp3}"' ::: $@
 }
+
+unsetopt correct
+
+unsetopt share_history
+zstyle ':completion:*' hosts off
+
+export PATH="$PATH:/usr/local/go/bin"
 
 # Python virtuelenv fix for tmux
 if [ -n "$VIRTUAL_ENV" ]; then
