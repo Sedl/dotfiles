@@ -10,11 +10,14 @@ require("naughty")
 -- Load Debian menu entries
 require("debian.menu")
 
+require("obvious.battery")
+require("obvious.wlan")
 
 -- SETTINGS
 
 theme = "zenburn"
-browser = "chromium-browser"
+browser = "chromium --password-store=gnome"
+-- browser = "iceweasel"
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -43,11 +46,12 @@ end
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
+-- beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 homedir = os.getenv("HOME")
 beautiful.init(homedir .. "/.config/awesome/themes/" .. theme .. "/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
-terminal = "x-terminal-emulator"
+terminal = "urxvt"
 editor = os.getenv("EDITOR") or "editor"
 editor_cmd = terminal .. " -e " .. editor
 
@@ -186,6 +190,8 @@ for s = 1, screen.count() do
             layout = awful.widget.layout.horizontal.leftright
         },
         mylayoutbox[s],
+        obvious.wlan(),
+        obvious.battery(),
         mytextclock,
         s == 1 and mysystray or nil,
         mytasklist[s],
@@ -196,10 +202,7 @@ end
 
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
-    awful.button({ }, 3, function () mymainmenu:toggle() end),
-    awful.button({ }, 4, awful.tag.viewnext),
-    awful.button({ }, 5, awful.tag.viewprev)
-))
+    awful.button({ }, 3, function () mymainmenu:toggle() end)))
 -- }}}
 
 -- {{{ Key bindings
@@ -254,7 +257,10 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
 
     -- Additional stuff
-    awful.key({ modkey,           }, "b", function () awful.util.spawn(browser) end),
+    -- browser
+    awful.key({ modkey, "Shift"   }, "b", function () awful.util.spawn(browser) end),
+    -- nautilus
+    awful.key({ modkey, "Shift"   }, "n", function () awful.util.spawn("nautilus --no-desktop") end),
 
     awful.key({ modkey }, "x",
               function ()
@@ -385,3 +391,10 @@ end)
 client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
+
+-- Run some stuff at startup
+-- awful.util.spawn_with_shell("gnome-settings-daemon")
+-- awful.util.spawn_with_shell("pgrep nm-applet || nm-applet")
+-- awful.util.spawn_with_shell("xcompmgr -cF")
+
+require("sound")
