@@ -1,5 +1,9 @@
 
-eval "$(SHELL=/bin/sh lesspipe)"
+if which lesspipe &>/dev/null; then
+  eval "$(SHELL=/bin/sh lesspipe)"
+elif which lesspipe.sh &>/dev/null; then
+  eval "$(SHELL=/bin/sh lesspipe.sh)"
+fi
 
 alias pscp="pscp -x '-o \"StrictHostKeyChecking no\"'"
 alias pssh="pssh -x '-o \"StrictHostKeyChecking no\"'"
