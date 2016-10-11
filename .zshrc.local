@@ -70,3 +70,9 @@ export PATH="$PATH:/usr/local/go/bin"
 if [ -n "$VIRTUAL_ENV" ]; then
     source "$VIRTUAL_ENV/bin/activate"
 fi
+
+# pretty print SQL
+alias sqlf='sqlformat --reindent --keywords upper --identifiers lower'
+
+# convert JSON to YAML. This improves readability of RESTful JSON APIs
+alias json2yaml="python -c 'import sys, yaml, json; yaml.safe_dump(json.load(sys.stdin), sys.stdout, default_flow_style=False)'"
