@@ -1,12 +1,8 @@
 
-if which lesspipe &>/dev/null; then
-  eval "$(SHELL=/bin/sh lesspipe)"
-elif which lesspipe.sh &>/dev/null; then
-  eval "$(SHELL=/bin/sh lesspipe.sh)"
-fi
+eval "$(SHELL=/bin/sh lesspipe)"
 
 alias pscp="pscp -x '-o \"StrictHostKeyChecking no\"'"
-alias pssh="pssh -x '-o \"StrictHostKeyChecking no\"'"
+alias pssh="parallel-ssh -x '-o \"StrictHostKeyChecking no\" -o \"VisualHostKey no\"'"
 alias burn="wodim -v -eject"
 
 export PATH="$PATH:/sbin:/usr/sbin"
@@ -43,11 +39,28 @@ for fname in os.listdir(SRCDIR):
 
 function macinfo () {
     python3 -c "
-    from netaddr import EUI
-    from sys import argv
-    print (EUI(argv[1]).info)
-    " $1
+from netaddr import EUI
+from sys import argv
+print (EUI(argv[1]).info)
+" $1
 }
+
+function randomip6addr () {
+    python3 -c "
+from random import choice
+CH='0123456789abcdef'
+
+a = ''.join([choice(CH) for i in range(16)])
+print('%s:%s:%s:%s' % (a[:4], a[4:8], a[8:12], a[12:]))
+"
+}
+
+unsetopt correct
+
+unsetopt share_history
+zstyle ':completion:*' hosts off
+
+export PATH="$PATH:/usr/local/go/bin"
 
 function flacsplit () {
     cuebreakpoints "${1}"|shnsplit -o flac "${2}"
@@ -59,13 +72,6 @@ function convert_mp3 () {
     parallel -j 3 'a={}; avconv -i "$a" -qscale:a 4 "${a[@]/%flac/mp3}"' ::: $@
 }
 
-unsetopt correct
-
-unsetopt share_history
-zstyle ':completion:*' hosts off
-
-export PATH="$PATH:/usr/local/go/bin"
-
 # Python virtuelenv fix for tmux
 if [ -n "$VIRTUAL_ENV" ]; then
     source "$VIRTUAL_ENV/bin/activate"
@@ -76,3 +82,28 @@ alias sqlf='sqlformat --reindent --keywords upper --identifiers lower'
 
 # convert JSON to YAML. This improves readability of RESTful JSON APIs
 alias json2yaml="python -c 'import sys, yaml, json; yaml.safe_dump(json.load(sys.stdin), sys.stdout, default_flow_style=False)'"
+
+function gluster-search () {
+    pssh -i -H kvm01 -H kvm02 -H kvm03 "ls /export/brick1/kvm/images/|grep \"${1}\""
+}
+
+alias sqlf='sqlformat --reindent --keywords upper --identifiers lower'
+
+function  whattecommit () {
+    git commit -m "$(wget -O - -q http://whatthecommit.com/|hxselect '#content >p' -c|grep -v href)"
+}
+
+function sshp () {
+    export http_proxy=http://127.0.0.1:8888
+    export https_proxy=http://127.0.0.1:8888
+    ssh -R 8888:127.0.0.1:8888 -o SendEnv=http_proxy -o SendEnv=https_proxy "$@"
+    unset https_proxy
+    unset http_proxy
+}
+
+RED=$'%{\e[1;31m%}'
+NO_COLOR=$'%{\e[0m%}'
+
+if [[ ! -z "${VIMRUNTIME}" ]]; then
+    PROMPT="${RED}VIM ${NO_COLOR}${PROMPT}"
+fi
